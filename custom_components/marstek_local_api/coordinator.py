@@ -55,16 +55,14 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def _update_devices_from_config(self) -> None:
-        """Update devices list from config entry."""
+        """Update device list from configuration."""
         # Clear existing devices
         self.devices.clear()
         self.client._devices.clear()
         
-        # Add devices from current config
-        _LOGGER.debug("Loading devices from config: %s devices found", len(self.entry.data[CONF_DEVICES]))
+        # Add configured devices
         for i, device_config in enumerate(self.entry.data[CONF_DEVICES]):
             device_name = device_config.get(CONF_DEVICE_NAME, f"Device {len(self.devices)+1}")
-            _LOGGER.debug("Adding device %d: %s (%s:%s)", i+1, device_name, device_config[CONF_IP_ADDRESS], device_config[CONF_DESTINATION_PORT])
             device = self.client.add_device(
                 device_name,
                 device_config[CONF_IP_ADDRESS],
@@ -79,10 +77,10 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Update polling interval
         self.update_interval = timedelta(seconds=entry.data[CONF_POLLING_INTERVAL])
         
-        # Update devices
+        # Update device configuration
         self._update_devices_from_config()
         
-        # Trigger immediate refresh to get data from new/updated devices
+        # Refresh data with updated devices
         await self.async_refresh()
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -92,29 +90,26 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         data: dict[str, Any] = {"devices": {}, "totals": {}}
         
-        _LOGGER.debug("Polling %d devices", len(self.devices))
-        
-        # Collect data from all devices
+        # Fetch data from all devices concurrently
         tasks = []
         for device in self.devices:
-            _LOGGER.debug("Creating polling task for device: %s", device)
             tasks.append(self._get_device_data(device))
         
         try:
             device_results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            # Process results
+            # Process device data results
             for device, result in zip(self.devices, device_results):
                 if isinstance(result, Exception):
                     _LOGGER.error("Error fetching data from %s: %s", device, result)
                     continue
                 
                 if result:
-                    # Use device name as the key for more user-friendly identification
+                    # Use device name as key for user-friendly identification
                     device_key = device.name
                     data["devices"][device_key] = result
             
-            # Calculate totals
+            # Calculate aggregate totals
             self._calculate_totals(data)
             
             return data
@@ -124,46 +119,47 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Error fetching data: {e}")
 
     async def _get_device_data(self, device: MarstekDevice) -> dict[str, Any] | None:
-        """Get data from a single device."""
+        """Retrieve and process data from a single device."""
         try:
-            # Get battery status
+            # Request battery status
             bat_status = await self.client.get_battery_status(device)
             if not bat_status or "result" not in bat_status:
                 _LOGGER.warning("No battery status received from %s", device)
                 return None
             
-            # Get energy system status
+            # Request energy system status
             es_status = await self.client.get_energy_system_status(device)
             if not es_status or "result" not in es_status:
                 _LOGGER.warning("No energy system status received from %s", device)
                 return None
             
-            # Extract and convert data
+            # Process response data
             bat_result = bat_status["result"]
             es_result = es_status["result"]
             
-            # Check for error codes and log warnings
+            # Log any device error codes
             bat_error_code = bat_result.get("error_code", "0")
             if bat_error_code != "0" and bat_error_code != 0:
                 _LOGGER.warning("Battery error code %s from device %s: %s", bat_error_code, device, bat_result)
             
-            # Energy system responses don't typically have error_code, but check if present
+            # Check for energy system error codes
             es_error_code = es_result.get("error_code")
             if es_error_code is not None and es_error_code != "0" and es_error_code != 0:
                 _LOGGER.warning("Energy system error code %s from device %s: %s", es_error_code, device, es_result)
             
+            # Build device data with unit conversions
             device_data = {
                 SENSOR_IDENTIFIER: bat_status.get("src", f"{device.ip_address}_{device.destination_port}"),
                 SENSOR_STATE_OF_CHARGE: bat_result.get("soc", 0),
-                SENSOR_CURRENT_CAPACITY: bat_result.get("bat_capacity", 0) / 1000,  # Convert Wh to kWh
-                SENSOR_MAX_CAPACITY: bat_result.get("rated_capacity", 0) / 1000,  # Convert Wh to kWh
+                SENSOR_CURRENT_CAPACITY: bat_result.get("bat_capacity", 0) / 1000,  # Wh to kWh
+                SENSOR_MAX_CAPACITY: bat_result.get("rated_capacity", 0) / 1000,  # Wh to kWh
                 SENSOR_TEMPERATURE: bat_result.get("bat_temp", 0),
                 SENSOR_GRID_POWER: es_result.get("ongrid_power", 0),
-                SENSOR_TOTAL_GRID_OUTPUT_ENERGY: es_result.get("total_grid_output_energy", 0) / 1000,  # Convert Wh to kWh
-                SENSOR_TOTAL_GRID_INPUT_ENERGY: es_result.get("total_grid_input_energy", 0) / 1000,  # Convert Wh to kWh
+                SENSOR_TOTAL_GRID_OUTPUT_ENERGY: es_result.get("total_grid_output_energy", 0) / 1000,  # Wh to kWh
+                SENSOR_TOTAL_GRID_INPUT_ENERGY: es_result.get("total_grid_input_energy", 0) / 1000,  # Wh to kWh
             }
             
-            # Update device identifier if we got it
+            # Store device identifier for future reference
             if "src" in bat_status and device.identifier is None:
                 device.identifier = bat_status["src"]
             
@@ -174,7 +170,7 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return None
 
     def _calculate_totals(self, data: dict[str, Any]) -> None:
-        """Calculate total values across all devices."""
+        """Calculate aggregate totals across all devices."""
         total_current_capacity = 0
         total_max_capacity = 0
         total_grid_power = 0

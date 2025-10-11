@@ -39,7 +39,7 @@ from .coordinator import MarstekCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-# Sensor configurations for individual devices
+# Sensor configuration for individual device sensors
 DEVICE_SENSORS = {
     SENSOR_IDENTIFIER: {
         "name": "Identifier",
@@ -85,7 +85,7 @@ DEVICE_SENSORS = {
     },
 }
 
-# Total sensors that aggregate data from all devices
+# Total sensors aggregating data from all devices
 TOTAL_SENSORS = {
     SENSOR_TOTAL_CURRENT_CAPACITY: {
         "name": "Total Current Capacity",
@@ -135,14 +135,12 @@ async def async_setup_entry(
     
     entities = []
 
-    # Add device-specific sensors
+    # Create device-specific sensors
     devices_data = coordinator.data.get("devices", {}) if coordinator.data else {}
-    _LOGGER.debug("Setting up sensors for %d devices: %s", len(devices_data), list(devices_data.keys()))
     
     for device_id, device_data in devices_data.items():
         if isinstance(device_data, dict) and "identifier" in device_data:
             device_name = device_data.get("device_name", device_id)
-            _LOGGER.debug("Adding sensors for device: %s (%s)", device_id, device_name)
             
             for sensor_type, sensor_config in DEVICE_SENSORS.items():
                 entities.append(
@@ -155,7 +153,7 @@ async def async_setup_entry(
                     )
                 )
 
-    # Add total sensors
+    # Create total aggregate sensors
     for sensor_type, sensor_config in TOTAL_SENSORS.items():
         entities.append(
             MarstekTotalSensor(
@@ -165,7 +163,6 @@ async def async_setup_entry(
             )
         )
 
-    _LOGGER.debug("Created %d sensor entities total", len(entities))
     async_add_entities(entities)
 
 
@@ -187,7 +184,7 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._sensor_type = sensor_type
         self._sensor_config = sensor_config
 
-        # Generate safe entity ID
+        # Create unique entity ID from device and sensor names
         safe_device_name = device_name.lower().replace(" ", "_").replace("-", "_")
         safe_sensor_name = sensor_config["name"].lower().replace(" ", "_").replace("-", "_")
         
@@ -198,11 +195,11 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._attr_state_class = sensor_config["state_class"]
         self._attr_native_unit_of_measurement = sensor_config["native_unit_of_measurement"]
 
-        # Make energy storage sensors available for Energy Dashboard
+        # Enable energy storage sensors for Energy Dashboard
         if sensor_type in [SENSOR_CURRENT_CAPACITY, SENSOR_MAX_CAPACITY]:
-            self._attr_entity_category = None  # Make available for Energy Dashboard
+            self._attr_entity_category = None
         
-        # Device information
+        # Device information for Home Assistant
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device_id)},
             "name": device_name,
@@ -217,18 +214,12 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         devices_data = self.coordinator.data.get("devices", {}) if self.coordinator.data else {}
         device_data = devices_data.get(self._device_id)
         if not device_data or not isinstance(device_data, dict):
-            _LOGGER.debug("No device data found for %s (%s)", self._device_id, self._sensor_type)
             return None
 
-        # The coordinator already stores data using SENSOR_* constants as keys
-        # so we can directly access the sensor type
+        # Access sensor data using the SENSOR_* constant keys
         if self._sensor_type in device_data:
-            value = device_data[self._sensor_type]
-            _LOGGER.debug("Sensor %s (%s) = %s", self._device_id, self._sensor_type, value)
-            return value
+            return device_data[self._sensor_type]
 
-        _LOGGER.debug("Sensor type %s not found in device data for %s. Available keys: %s", 
-                     self._sensor_type, self._device_id, list(device_data.keys()))
         return None
 
 
@@ -246,7 +237,7 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._sensor_type = sensor_type
         self._sensor_config = sensor_config
 
-        # Generate safe entity ID
+        # Create unique entity ID for total sensor
         safe_sensor_name = sensor_config["name"].lower().replace(" ", "_").replace("-", "_")
         
         self._attr_unique_id = f"{DOMAIN}_system_{safe_sensor_name}"
@@ -256,7 +247,7 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._attr_state_class = sensor_config["state_class"]
         self._attr_native_unit_of_measurement = sensor_config["native_unit_of_measurement"]
 
-        # Device information for the integration itself
+        # Device information for the system integration
         self._attr_device_info = {
             "identifiers": {(DOMAIN, "system")},
             "name": "Marstek Battery Integration",
@@ -279,7 +270,7 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
             if not isinstance(device_data, dict):
                 continue
 
-            # Map sensor types to data aggregation logic using the actual SENSOR_* constants
+            # Aggregate sensor data based on sensor type
             if self._sensor_type == SENSOR_TOTAL_CURRENT_CAPACITY:
                 if SENSOR_CURRENT_CAPACITY in device_data and device_data[SENSOR_CURRENT_CAPACITY] is not None:
                     total_value += device_data[SENSOR_CURRENT_CAPACITY]

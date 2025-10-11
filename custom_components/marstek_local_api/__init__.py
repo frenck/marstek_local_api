@@ -19,8 +19,6 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Marstek from a config entry."""
-    _LOGGER.debug("Setting up Marstek integration")
-    
     coordinator = MarstekCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
     
@@ -29,10 +27,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
-    # Set up options update listener
+    # Set up configuration update listener
     entry.async_on_unload(entry.add_update_listener(async_update_options))
     
-    # Set up services (only once)
+    # Register services for first integration instance
     if len(hass.data[DOMAIN]) == 1:
         await async_setup_services(hass)
     
@@ -41,13 +39,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    _LOGGER.debug("Unloading Marstek integration")
-    
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         coordinator = hass.data[DOMAIN].pop(entry.entry_id)
         await coordinator.async_shutdown()
         
-        # Remove services if this is the last entry
+        # Clean up services when no integrations remain
         if not hass.data[DOMAIN]:
             await async_remove_services(hass)
     

@@ -81,10 +81,10 @@ class MarstekUDPClient:
         return device
     
     async def _get_next_request_id(self) -> int:
-        """Get the next unique request ID in a thread-safe manner."""
+        """Get the next unique request ID with thread safety."""
         async with self._id_lock:
             self._last_request_id += 1
-            # Wrap around if we exceed smallint range
+            # Keep within smallint range (1-32767)
             if self._last_request_id > 32767:
                 self._last_request_id = 1
             return self._last_request_id
@@ -105,10 +105,10 @@ class MarstekUDPClient:
             _LOGGER.error("UDP client not started")
             return None
         
-        # Generate unique request ID (sequential, thread-safe)
+        # Create unique request ID
         request_id = await self._get_next_request_id()
         
-        # Prepare request - use same ID for both top-level and params.id to avoid confusion
+        # Build JSON-RPC request
         request = {
             "id": request_id,
             "method": method,
@@ -116,21 +116,17 @@ class MarstekUDPClient:
         }
         
         try:
-            # Create future for response
+            # Create future for response tracking
             future: asyncio.Future[dict[str, Any]] = asyncio.Future()
             self._pending_requests[request_id] = (device, future)
             
-            # Send request - ensure proper JSON formatting with double quotes
+            # Send JSON-RPC request via UDP
             message = json.dumps(request, separators=(',', ':')).encode('utf-8')
             self._transport.sendto(message, (device.ip_address, device.destination_port))
             
-            # Log the actual JSON string being sent (not the Python dict)
-            _LOGGER.debug("Sent JSON to %s: %s", device, message.decode('utf-8'))
-            
-            # Wait for response with timeout
+            # Wait for response with timeout and retry logic
             try:
                 response = await asyncio.wait_for(future, timeout=UDP_TIMEOUT)
-                _LOGGER.debug("Received response from %s: %s", device, response)
                 return response
                 
             except asyncio.TimeoutError:
@@ -145,17 +141,13 @@ class MarstekUDPClient:
             return None
             
         finally:
-            # Clean up pending request
+            # Clean up pending request tracking
             self._pending_requests.pop(request_id, None)
     
     def _handle_response(self, data: bytes, addr: tuple[str, int]) -> None:
         """Handle incoming UDP response."""
         try:
             response = json.loads(data.decode('utf-8'))
-            
-            # Log compressed JSON for better readability
-            compressed_json = json.dumps(response, separators=(',', ':'))
-            _LOGGER.debug("Received JSON from %s: %s", addr, compressed_json)
             
             request_id = response.get("id")
             
@@ -169,12 +161,12 @@ class MarstekUDPClient:
             
             device, future = self._pending_requests[request_id]
             
-            # Update device identifier if available
+            # Store device identifier if received
             if "src" in response and device.identifier is None:
                 device.identifier = response["src"]
                 _LOGGER.info("Device %s identified as %s", device, device.identifier)
             
-            # Complete the future with the response
+            # Complete the response future
             if not future.done():
                 future.set_result(response)
                 
