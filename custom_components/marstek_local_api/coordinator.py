@@ -61,9 +61,12 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.client._devices.clear()
         
         # Add devices from current config
-        for device_config in self.entry.data[CONF_DEVICES]:
+        _LOGGER.debug("Loading devices from config: %s devices found", len(self.entry.data[CONF_DEVICES]))
+        for i, device_config in enumerate(self.entry.data[CONF_DEVICES]):
+            device_name = device_config.get(CONF_DEVICE_NAME, f"Device {len(self.devices)+1}")
+            _LOGGER.debug("Adding device %d: %s (%s:%s)", i+1, device_name, device_config[CONF_IP_ADDRESS], device_config[CONF_DESTINATION_PORT])
             device = self.client.add_device(
-                device_config.get(CONF_DEVICE_NAME, f"Device {len(self.devices)+1}"),
+                device_name,
                 device_config[CONF_IP_ADDRESS],
                 device_config[CONF_DESTINATION_PORT]
             )
@@ -89,9 +92,12 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         data: dict[str, Any] = {"devices": {}, "totals": {}}
         
+        _LOGGER.debug("Polling %d devices", len(self.devices))
+        
         # Collect data from all devices
         tasks = []
         for device in self.devices:
+            _LOGGER.debug("Creating polling task for device: %s", device)
             tasks.append(self._get_device_data(device))
         
         try:

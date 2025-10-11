@@ -108,11 +108,11 @@ class MarstekUDPClient:
         # Generate unique request ID (sequential, thread-safe)
         request_id = await self._get_next_request_id()
         
-        # Prepare request
+        # Prepare request - use same ID for both top-level and params.id to avoid confusion
         request = {
             "id": request_id,
             "method": method,
-            "params": {"id": 0}
+            "params": {"id": request_id}
         }
         
         try:

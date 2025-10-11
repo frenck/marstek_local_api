@@ -4,15 +4,39 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import         # Entity configuration
-        self._attr_name = f"{device_id} {self._config['name']}"
-        self._attr_unique_id = f"{DOMAIN}_{device_id.lower().replace(' ', '_')}_{sensor_type}"
-        self._attr_icon = self._config["icon"]
-        self._attr_device_class = self._config["device_class"]
-        self._attr_state_class = self._config["state_class"]
-        self._attr_native_unit_of_measurement = self._config["native_unit_of_measurement"]
-        
-        # Energy Dashboard compatibility
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import (
+    DOMAIN,
+    SENSOR_CURRENT_CAPACITY,
+    SENSOR_GRID_POWER,
+    SENSOR_IDENTIFIER,
+    SENSOR_MAX_CAPACITY,
+    SENSOR_STATE_OF_CHARGE,
+    SENSOR_TEMPERATURE,
+    SENSOR_TOTAL_CURRENT_CAPACITY,
+    SENSOR_TOTAL_GRID_OUTPUT_ENERGY,
+    SENSOR_TOTAL_GRID_INPUT_ENERGY,
+    SENSOR_TOTAL_GRID_POWER,
+    SENSOR_TOTAL_MAX_CAPACITY,
+)
+from .coordinator import MarstekCoordinator
+
+_LOGGER = logging.getLogger(__name__)
         if sensor_type in [SENSOR_CURRENT_CAPACITY, SENSOR_MAX_CAPACITY]:
             self._attr_entity_category = None  # Make available for Energy Dashboard
         
@@ -190,7 +214,9 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         
         # Entity configuration
         self._attr_name = f"{device_id} {self._config['name']}"
-        self._attr_unique_id = f"{DOMAIN}_{device_id}_{sensor_type}"
+        # Create safe entity ID by converting to lowercase and replacing spaces with underscores
+        safe_device_id = device_id.lower().replace(' ', '_').replace('-', '_')
+        self._attr_unique_id = f"{DOMAIN}_{safe_device_id}_{sensor_type}"
         self._attr_icon = self._config["icon"]
         self._attr_device_class = self._config["device_class"]
         self._attr_state_class = self._config["state_class"]
