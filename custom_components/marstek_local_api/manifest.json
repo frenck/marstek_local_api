@@ -1,6 +1,6 @@
 {
     "domain": "marstek_local_api",
-    "name": "Marstek Battery System - Local API",
+    "name": "Marstek - Local API",
     "codeowners": ["@DoctaShizzle"],
     "config_flow": true,
     "dependencies": [],
