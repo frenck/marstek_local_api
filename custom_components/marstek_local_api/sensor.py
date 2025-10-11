@@ -4,8 +4,26 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
+from homeassistant.components.sensor import         # Entity configuration
+        self._attr_name = f"{device_id} {self._config['name']}"
+        self._attr_unique_id = f"{DOMAIN}_{device_id.lower().replace(' ', '_')}_{sensor_type}"
+        self._attr_icon = self._config["icon"]
+        self._attr_device_class = self._config["device_class"]
+        self._attr_state_class = self._config["state_class"]
+        self._attr_native_unit_of_measurement = self._config["native_unit_of_measurement"]
+        
+        # Energy Dashboard compatibility
+        if sensor_type in [SENSOR_CURRENT_CAPACITY, SENSOR_MAX_CAPACITY]:
+            self._attr_entity_category = None  # Make available for Energy Dashboard
+        
+        # Device information
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, device_id)},
+            "name": f"Marstek Battery {device_id}",
+            "manufacturer": "Marstek",
+            "model": "Battery System",
+            "sw_version": "1.0",
+        }lass,
     SensorEntity,
     SensorStateClass,
 )

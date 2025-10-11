@@ -13,6 +13,7 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_DESTINATION_PORT,
+    CONF_DEVICE_NAME,
     CONF_DEVICES,
     CONF_IP_ADDRESS,
     CONF_POLLING_INTERVAL,
@@ -83,6 +84,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             if user_input.get("add_device", False):
                 device = {
+                    CONF_DEVICE_NAME: user_input[CONF_DEVICE_NAME],
                     CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
                     CONF_DESTINATION_PORT: user_input[CONF_DESTINATION_PORT],
                 }
@@ -107,6 +109,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="add_device",
             data_schema=vol.Schema({
+                vol.Required(CONF_DEVICE_NAME): cv.string,
                 vol.Required(CONF_IP_ADDRESS): cv.string,
                 vol.Required(
                     CONF_DESTINATION_PORT, default=DEFAULT_DESTINATION_PORT
@@ -222,6 +225,7 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             # Add the new device
             device = {
+                CONF_DEVICE_NAME: user_input[CONF_DEVICE_NAME],
                 CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
                 CONF_DESTINATION_PORT: user_input[CONF_DESTINATION_PORT],
             }
@@ -236,6 +240,7 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="add_device",
             data_schema=vol.Schema({
+                vol.Required(CONF_DEVICE_NAME): cv.string,
                 vol.Required(CONF_IP_ADDRESS): cv.string,
                 vol.Required(
                     CONF_DESTINATION_PORT, default=DEFAULT_DESTINATION_PORT
@@ -250,7 +255,8 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
         
         device_options = {}
         for i, device in enumerate(self._devices):
-            device_options[i] = f"{device[CONF_IP_ADDRESS]}:{device[CONF_DESTINATION_PORT]}"
+            device_name = device.get(CONF_DEVICE_NAME, f"Device {i+1}")
+            device_options[i] = f"{device_name} ({device[CONF_IP_ADDRESS]}:{device[CONF_DESTINATION_PORT]})"
         
         return vol.Schema({
             vol.Optional("remove_device"): vol.In(device_options),

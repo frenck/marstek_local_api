@@ -12,8 +12,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .client import MarstekDevice, MarstekUDPClient
 from .const import (
-    CONF_DEVICES,
     CONF_DESTINATION_PORT,
+    CONF_DEVICE_NAME,
+    CONF_DEVICES,
     CONF_IP_ADDRESS,
     CONF_POLLING_INTERVAL,
     CONF_SOURCE_PORT,
@@ -62,6 +63,7 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Add devices from current config
         for device_config in self.entry.data[CONF_DEVICES]:
             device = self.client.add_device(
+                device_config.get(CONF_DEVICE_NAME, f"Device {len(self.devices)+1}"),
                 device_config[CONF_IP_ADDRESS],
                 device_config[CONF_DESTINATION_PORT]
             )
@@ -102,7 +104,8 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     continue
                 
                 if result:
-                    device_key = device.identifier or f"{device.ip_address}_{device.destination_port}"
+                    # Use device name as the key for more user-friendly identification
+                    device_key = device.name
                     data["devices"][device_key] = result
             
             # Calculate totals

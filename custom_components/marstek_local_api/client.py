@@ -15,8 +15,9 @@ _LOGGER = logging.getLogger(__name__)
 class MarstekDevice:
     """Represents a Marstek battery device."""
     
-    def __init__(self, ip_address: str, destination_port: int) -> None:
+    def __init__(self, name: str, ip_address: str, destination_port: int) -> None:
         """Initialize the device."""
+        self.name = name
         self.ip_address = ip_address
         self.destination_port = destination_port
         self.identifier: str | None = None
@@ -24,7 +25,7 @@ class MarstekDevice:
     
     def __str__(self) -> str:
         """Return string representation."""
-        return f"MarstekDevice({self.ip_address}:{self.destination_port})"
+        return f"MarstekDevice({self.name}@{self.ip_address}:{self.destination_port})"
 
 
 class MarstekUDPClient:
@@ -72,9 +73,9 @@ class MarstekUDPClient:
         self._pending_requests.clear()
         _LOGGER.info("UDP client stopped")
     
-    def add_device(self, ip_address: str, destination_port: int) -> MarstekDevice:
+    def add_device(self, name: str, ip_address: str, destination_port: int) -> MarstekDevice:
         """Add a device to monitor."""
-        device = MarstekDevice(ip_address, destination_port)
+        device = MarstekDevice(name, ip_address, destination_port)
         self._devices.append(device)
         _LOGGER.info("Added device: %s", device)
         return device
@@ -150,10 +151,12 @@ class MarstekUDPClient:
     def _handle_response(self, data: bytes, addr: tuple[str, int]) -> None:
         """Handle incoming UDP response."""
         try:
-            # Log raw received data for debugging
-            _LOGGER.debug("Received raw data from %s: %s", addr, data.decode('utf-8'))
-            
             response = json.loads(data.decode('utf-8'))
+            
+            # Log compressed JSON for better readability
+            compressed_json = json.dumps(response, separators=(',', ':'))
+            _LOGGER.debug("Received JSON from %s: %s", addr, compressed_json)
+            
             request_id = response.get("id")
             
             if request_id is None:
@@ -176,7 +179,9 @@ class MarstekUDPClient:
                 future.set_result(response)
                 
         except json.JSONDecodeError as e:
-            _LOGGER.error("Failed to decode JSON response from %s: %s. Raw data: %s", addr, e, data.decode('utf-8', errors='replace'))
+            # For JSON decode errors, show the raw data since it's malformed
+            raw_data = data.decode('utf-8', errors='replace')
+            _LOGGER.error("Failed to decode JSON response from %s: %s. Raw data: %s", addr, e, raw_data)
         except Exception as e:
             _LOGGER.error("Error handling response from %s: %s", addr, e)
 

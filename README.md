@@ -45,9 +45,10 @@ A custom Home Assistant integration for monitoring Marstek battery systems via U
 ### Adding Devices
 
 For each Marstek battery device:
-1. Enter the **IP Address** of the device
-2. Enter the **Destination Port** (default: 30000)
-3. Choose whether to add another device or finish setup
+1. Enter a **Device Name** (e.g., "Main Battery", "Garage Battery")
+2. Enter the **IP Address** of the device
+3. Enter the **Destination Port** (default: 30000)
+4. Choose whether to add another device or finish setup
 
 ### Managing Devices After Setup
 

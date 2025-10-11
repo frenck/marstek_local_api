@@ -18,6 +18,7 @@
                 "title": "Add Device",
                 "description": "Add a Marstek battery device. Currently configured {device_count} device(s).",
                 "data": {
+                    "device_name": "Device name (e.g., 'Main Battery', 'Garage Battery')",
                     "ip_address": "Device IP address",
                     "destination_port": "Device UDP port",
                     "add_device": "Add another device"
@@ -58,6 +59,7 @@
                 "title": "Add New Device",
                 "description": "Add a new Marstek device to the integration.",
                 "data": {
+                    "device_name": "Device name (e.g., 'Main Battery', 'Garage Battery')",
                     "ip_address": "Device IP address",
                     "destination_port": "Device UDP port"
                 }

@@ -9,6 +9,7 @@ CONF_SOURCE_PORT: Final = "source_port"
 CONF_DEVICES: Final = "devices"
 CONF_IP_ADDRESS: Final = "ip_address"
 CONF_DESTINATION_PORT: Final = "destination_port"
+CONF_DEVICE_NAME: Final = "device_name"
 
 # Default values
 DEFAULT_POLLING_INTERVAL: Final = 30  # seconds
