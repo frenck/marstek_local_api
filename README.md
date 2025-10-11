@@ -1,6 +1,6 @@
-# Marstek Battery Integration for Home Assistant
+# Marstek Local API Integration for Home Assistant
 
-A custom Home Assistant integration for monitoring Marstek battery systems via UDP communication on the device's local API.
+A custom Home Assistant integration for monitoring Marstek battery systems via UDP communication using the device's local API.
 
 ## Features
 
@@ -21,7 +21,7 @@ A custom Home Assistant integration for monitoring Marstek battery systems via U
 ### HACS (Recommended)
 
 1. Add this repository to HACS as a custom repository
-2. Search for "Marstek Battery System" in HACS
+2. Search for "Marstek Local API" in HACS
 3. Install the integration
 4. Restart Home Assistant
 
@@ -59,7 +59,7 @@ For each Marstek battery device:
 
 To add or remove devices after initial configuration:
 1. Go to **Settings → Integrations**
-2. Find **Marstek Battery System** 
+2. Find **Marstek Local API** 
 3. Click the **Configure** button (gear icon)
 4. Choose from:
    - **Add new device**: Add another battery device (requires IP address)
@@ -80,10 +80,53 @@ This integration uses **manual configuration** rather than auto-discovery becaus
 
 - Marstek battery devices must support UDP communication
 - Devices must respond to `Bat.GetStatus` and `ES.GetStatus` JSON-RPC requests
-- Source and destination ports should match (Marstek requirement)
+- **Source and destination ports must be the same** (Marstek requirement, a future firmware update of marstek might fix this)
+- **Port 30000 is typically required** - some models/firmware may not allow port customization
 - Devices should be accessible on your local network
 - **You must know each device's IP address** - the integration does not scan for devices
 - Consider setting static IP addresses for your devices to prevent configuration issues
+- **Local API must be enabled** on the battery device (see setup instructions below)
+
+## Enabling Local API on Marstek Devices
+
+**Important**: If your Marstek battery is not responding, you likely need to enable the Local API feature first.
+
+### Using Marstek Venus Monitor (Recommended)
+
+1. **Download the tool**: Visit [Marstek Venus Monitor](https://rweijnen.github.io/marstek-venus-monitor/latest/)
+2. **Use Android device**: Open the web app on an Android device with Bluetooth
+3. **Connect via Bluetooth**: Connect to your Marstek battery using Bluetooth
+4. **Enable Local API**: Find and enable the "Local API" setting
+5. **Configure Port**: Set the UDP port (default: 30000)
+   - **Note**: Some battery models/firmware versions may not allow port changes
+   - **Important**: Source and destination ports must match in Home Assistant configuration
+
+### Alternative: Contact Marstek Support
+
+If you cannot use the Venus Monitor tool (no Android device, Bluetooth issues, etc.):
+
+1. **Contact Marstek Support**: Send an email to Marstek technical support
+2. **Request Local API activation**: Ask them to enable the Local API/UDP API feature
+3. **Provide device details**: Include your battery model and serial number
+4. **Specify port requirements**: Request port 30000 or ask about available ports
+5. **Wait for configuration**: This process typically takes **a few days** to complete
+6. **Confirm activation**: Marstek will notify you when the Local API is enabled
+
+**Note**: This method requires waiting for official support response, while the Venus Monitor tool provides immediate configuration access.
+
+### Port Configuration Notes
+
+- **Default Port**: 30000 (recommended)
+- **Port Matching**: The source port (Home Assistant) and destination port (battery) must be identical
+- **Firmware Limitations**: Depending on your exact battery model and firmware version, you may not be able to change the port from 30000
+- **Network Requirements**: Ensure the chosen port is not blocked by firewalls
+
+### Troubleshooting Local API Setup
+
+- **No response from battery**: Check if Local API is enabled
+- **Port conflicts**: Try different ports if your model supports it
+- **Bluetooth connection issues**: Ensure Android device Bluetooth is working
+- **Settings not saving**: Some firmware versions may have limitations
 
 ## Sensors
 
@@ -106,7 +149,7 @@ This integration uses **manual configuration** rather than auto-discovery becaus
 
 ## Services
 
-### `marstek.refresh_data`
+### `marstek_local_api.refresh_data`
 
 Manually refresh data from all Marstek devices.
 
@@ -144,22 +187,33 @@ The integration uses JSON-RPC over UDP:
 ### Common Issues
 
 1. **No data from devices**: 
+   - **First check**: Ensure Local API is enabled (see "Enabling Local API" section above)
    - Verify device IP addresses are correct and reachable
    - Check that devices are on the same network as Home Assistant
    - Confirm port configuration (default: 30000)
+   - Verify source and destination ports match
 
 2. **Device suddenly stops working**:
    - Check if device IP address has changed (DHCP assignment)
+   - Verify Local API is still enabled on the device
    - Consider setting static IP addresses for your devices
 
 3. **Timeout errors**: 
    - Verify network connectivity between Home Assistant and devices
    - Check firewall settings on both Home Assistant and device networks
    - Ensure devices are powered on and responsive
+   - Confirm Local API is enabled and responding
 
 4. **Port conflicts**: 
    - Ensure source port (default: 30000) is not used by other applications
    - Check if multiple Home Assistant instances are using the same port
+   - Try different ports if your battery model supports port customization
+
+5. **Local API not responding**:
+   - Use [Marstek Venus Monitor](https://rweijnen.github.io/marstek-venus-monitor/latest/) to enable Local API
+   - Check if your battery model/firmware supports Local API
+   - Verify port settings match between battery and Home Assistant
+   - Some older firmware may require port 30000 specifically
 
 ### Finding Device IP Addresses
 

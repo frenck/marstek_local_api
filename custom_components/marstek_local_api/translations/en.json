@@ -2,21 +2,21 @@
     "config": {
         "step": {
             "user": {
-                "title": "Marstek Battery System - Local API",
-                "description": "Set up the Marstek battery integration to monitor your battery system via the Local API.",
+                "title": "Marstek - Local API",
+                "description": "Set up the Marstek Local API integration to monitor your battery system via UDP communication.",
                 "data": {}
             },
             "integration_config": {
-                "title": "Integration Configuration",
-                "description": "Configure the global settings for the Marstek integration.",
+                "title": "Marstek - Local API Configuration",
+                "description": "Configure the global settings for the Marstek Local API integration.",
                 "data": {
                     "polling_interval": "Polling interval (seconds)",
                     "source_port": "Source UDP port"
                 }
             },
             "add_device": {
-                "title": "Add Device",
-                "description": "Add a Marstek battery device. Currently configured {device_count} device(s).",
+                "title": "Add Battery Device",
+                "description": "Add a Marstek battery device to the integration. Currently configured {device_count} device(s).",
                 "data": {
                     "device_name": "Device name (e.g., 'Main Battery', 'Garage Battery')",
                     "ip_address": "Device IP address",
@@ -35,7 +35,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "Configure Marstek Options",
+                "title": "Configure Marstek Local API",
                 "description": "Choose what you want to configure.",
                 "data": {
                     "action": "Action"
@@ -49,15 +49,15 @@
                 }
             },
             "manage_devices": {
-                "title": "Manage Devices",
-                "description": "Remove devices from the integration. Current devices: {device_count}",
+                "title": "Manage Battery Devices",
+                "description": "Remove battery devices from the integration. Current devices: {device_count}",
                 "data": {
                     "remove_device": "Select device to remove (optional)"
                 }
             },
             "add_device": {
-                "title": "Add New Device",
-                "description": "Add a new Marstek device to the integration.",
+                "title": "Add New Battery Device",
+                "description": "Add a new Marstek battery device to the integration.",
                 "data": {
                     "device_name": "Device name (e.g., 'Main Battery', 'Garage Battery')",
                     "ip_address": "Device IP address",

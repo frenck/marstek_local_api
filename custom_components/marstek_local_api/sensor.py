@@ -235,8 +235,8 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
             "identifiers": {(DOMAIN, device_id)},
             "name": device_name,
             "manufacturer": "Marstek",
-            "model": "Marstek Battery Device",
-            "sw_version": "1.0",
+            "model": "Battery System",
+            "sw_version": "Local API v1.0",
         }
 
     @property
@@ -272,7 +272,7 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         safe_sensor_name = sensor_config["name"].lower().replace(" ", "_").replace("-", "_")
         
         self._attr_unique_id = f"{DOMAIN}_system_{safe_sensor_name}"
-        self._attr_name = f"Marstek {sensor_config['name']}"
+        self._attr_name = f"Marstek Local API {sensor_config['name']}"
         self._attr_icon = sensor_config["icon"]
         self._attr_device_class = sensor_config["device_class"]
         self._attr_state_class = sensor_config["state_class"]
@@ -281,10 +281,10 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         # Device information for the system integration
         self._attr_device_info = {
             "identifiers": {(DOMAIN, "system")},
-            "name": "Marstek Battery Integration",
+            "name": "Marstek Local API Integration",
             "manufacturer": "Marstek",
-            "model": "Marstek Battery Array",
-            "sw_version": "1.0",
+            "model": "Battery System Array",
+            "sw_version": "Local API v1.0",
         }
 
     @property
