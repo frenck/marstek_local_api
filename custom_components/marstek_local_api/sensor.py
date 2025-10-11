@@ -265,7 +265,7 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
             "identifiers": {(DOMAIN, "system")},
             "name": "Marstek Battery System",
             "manufacturer": "Marstek",
-            "model": "Multi-Battery System",
+            "model": "Marstek Battery System",
             "sw_version": "1.0",
         }
 

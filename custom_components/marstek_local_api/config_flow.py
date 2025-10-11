@@ -82,14 +82,16 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            # Always add the current device first
+            device = {
+                CONF_DEVICE_NAME: user_input[CONF_DEVICE_NAME],
+                CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
+                CONF_DESTINATION_PORT: user_input[CONF_DESTINATION_PORT],
+            }
+            self._devices.append(device)
+            
+            # Then check if user wants to add another device
             if user_input.get("add_device", False):
-                device = {
-                    CONF_DEVICE_NAME: user_input[CONF_DEVICE_NAME],
-                    CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
-                    CONF_DESTINATION_PORT: user_input[CONF_DESTINATION_PORT],
-                }
-                self._devices.append(device)
-                
                 # Show form again to add more devices
                 return await self.async_step_add_device()
             else:

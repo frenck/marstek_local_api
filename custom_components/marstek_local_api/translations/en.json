@@ -21,7 +21,7 @@
                     "device_name": "Device name (e.g., 'Main Battery', 'Garage Battery')",
                     "ip_address": "Device IP address",
                     "destination_port": "Device UDP port",
-                    "add_device": "Add another device"
+                    "add_device": "Add another device after this one"
                 }
             }
         },
