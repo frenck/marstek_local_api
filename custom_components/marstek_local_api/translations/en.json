@@ -35,11 +35,36 @@
         "step": {
             "init": {
                 "title": "Configure Marstek Options",
-                "description": "Update the configuration options for the Marstek integration.",
+                "description": "Choose what you want to configure.",
+                "data": {
+                    "action": "Action"
+                }
+            },
+            "modify_polling": {
+                "title": "Modify Polling Interval",
+                "description": "Update how often the integration polls your devices.",
                 "data": {
                     "polling_interval": "Polling interval (seconds)"
                 }
+            },
+            "manage_devices": {
+                "title": "Manage Devices",
+                "description": "Remove devices from the integration. Current devices: {device_count}",
+                "data": {
+                    "remove_device": "Select device to remove (optional)"
+                }
+            },
+            "add_device": {
+                "title": "Add New Device",
+                "description": "Add a new Marstek device to the integration.",
+                "data": {
+                    "ip_address": "Device IP address",
+                    "destination_port": "Device UDP port"
+                }
             }
+        },
+        "error": {
+            "no_devices_remaining": "Cannot remove the last device. At least one device is required."
         }
     }
 }

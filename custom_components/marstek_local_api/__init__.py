@@ -29,6 +29,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
+    # Set up options update listener
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+    
     # Set up services (only once)
     if len(hass.data[DOMAIN]) == 1:
         await async_setup_services(hass)
@@ -55,3 +58,9 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
+
+
+async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update options."""
+    coordinator: MarstekCoordinator = hass.data[DOMAIN][entry.entry_id]
+    await coordinator.async_config_entry_updated(hass, entry)

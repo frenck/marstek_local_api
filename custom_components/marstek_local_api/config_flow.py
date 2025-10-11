@@ -133,23 +133,125 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._config_entry = config_entry
+        self._devices: list[dict[str, Any]] = list(config_entry.data.get(CONF_DEVICES, []))
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            action = user_input.get("action")
+            if action == "modify_polling":
+                return await self.async_step_modify_polling()
+            elif action == "manage_devices":
+                return await self.async_step_manage_devices()
+            elif action == "add_device":
+                return await self.async_step_add_device()
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
+                vol.Required("action"): vol.In({
+                    "modify_polling": "Modify polling interval",
+                    "manage_devices": "Manage devices",
+                    "add_device": "Add new device"
+                }),
+            }),
+        )
+
+    async def async_step_modify_polling(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Modify polling interval."""
+        if user_input is not None:
+            # Update only the polling interval, keep existing data
+            new_data = dict(self._config_entry.data)
+            new_data[CONF_POLLING_INTERVAL] = user_input[CONF_POLLING_INTERVAL]
+            
+            return self.async_create_entry(title="", data=new_data)
+
+        return self.async_show_form(
+            step_id="modify_polling",
+            data_schema=vol.Schema({
                 vol.Required(
                     CONF_POLLING_INTERVAL,
-                    default=self.config_entry.data.get(
+                    default=self._config_entry.data.get(
                         CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
                     ),
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=3600)),
             }),
         )
+
+    async def async_step_manage_devices(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage existing devices."""
+        if user_input is not None:
+            if "remove_device" in user_input:
+                # Remove selected device
+                device_to_remove = user_input["remove_device"]
+                if device_to_remove < len(self._devices):
+                    self._devices.pop(device_to_remove)
+                
+                # If no devices left, show error
+                if not self._devices:
+                    return self.async_show_form(
+                        step_id="manage_devices",
+                        data_schema=self._get_manage_devices_schema(),
+                        errors={"base": "no_devices_remaining"},
+                    )
+                
+                # Show updated list
+                return await self.async_step_manage_devices()
+            else:
+                # Save changes and finish
+                new_data = dict(self._config_entry.data)
+                new_data[CONF_DEVICES] = self._devices
+                return self.async_create_entry(title="", data=new_data)
+
+        return self.async_show_form(
+            step_id="manage_devices",
+            data_schema=self._get_manage_devices_schema(),
+        )
+
+    async def async_step_add_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Add a new device."""
+        if user_input is not None:
+            # Add the new device
+            device = {
+                CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
+                CONF_DESTINATION_PORT: user_input[CONF_DESTINATION_PORT],
+            }
+            self._devices.append(device)
+            
+            # Update the config entry
+            new_data = dict(self._config_entry.data)
+            new_data[CONF_DEVICES] = self._devices
+            
+            return self.async_create_entry(title="", data=new_data)
+
+        return self.async_show_form(
+            step_id="add_device",
+            data_schema=vol.Schema({
+                vol.Required(CONF_IP_ADDRESS): cv.string,
+                vol.Required(
+                    CONF_DESTINATION_PORT, default=DEFAULT_DESTINATION_PORT
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
+            }),
+        )
+
+    def _get_manage_devices_schema(self) -> vol.Schema:
+        """Get schema for managing devices."""
+        if not self._devices:
+            return vol.Schema({})
+        
+        device_options = {}
+        for i, device in enumerate(self._devices):
+            device_options[i] = f"{device[CONF_IP_ADDRESS]}:{device[CONF_DESTINATION_PORT]}"
+        
+        return vol.Schema({
+            vol.Optional("remove_device"): vol.In(device_options),
+        })

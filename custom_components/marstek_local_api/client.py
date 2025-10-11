@@ -12,7 +12,6 @@ from .const import UDP_TIMEOUT, MAX_RETRIES, METHOD_BAT_STATUS, METHOD_ES_STATUS
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class MarstekDevice:
     """Represents a Marstek battery device."""
     
@@ -39,6 +38,8 @@ class MarstekUDPClient:
         self._protocol: MarstekUDPProtocol | None = None
         self._devices: list[MarstekDevice] = []
         self._pending_requests: dict[int, tuple[MarstekDevice, asyncio.Future]] = {}
+        self._last_request_id: int = 0
+        self._id_lock = asyncio.Lock()
     
     async def start(self) -> None:
         """Start the UDP client."""
@@ -78,6 +79,15 @@ class MarstekUDPClient:
         _LOGGER.info("Added device: %s", device)
         return device
     
+    async def _get_next_request_id(self) -> int:
+        """Get the next unique request ID in a thread-safe manner."""
+        async with self._id_lock:
+            self._last_request_id += 1
+            # Wrap around if we exceed smallint range
+            if self._last_request_id > 32767:
+                self._last_request_id = 1
+            return self._last_request_id
+    
     async def get_battery_status(self, device: MarstekDevice) -> dict[str, Any] | None:
         """Get battery status from a device."""
         return await self._send_request(device, METHOD_BAT_STATUS)
@@ -94,10 +104,8 @@ class MarstekUDPClient:
             _LOGGER.error("UDP client not started")
             return None
         
-        # Generate unique request ID
-        request_id = random.randint(1, 999999)
-        while request_id in self._pending_requests:
-            request_id = random.randint(1, 999999)
+        # Generate unique request ID (sequential, thread-safe)
+        request_id = await self._get_next_request_id()
         
         # Prepare request
         request = {
@@ -111,11 +119,12 @@ class MarstekUDPClient:
             future: asyncio.Future[dict[str, Any]] = asyncio.Future()
             self._pending_requests[request_id] = (device, future)
             
-            # Send request
-            message = json.dumps(request).encode('utf-8')
+            # Send request - ensure proper JSON formatting with double quotes
+            message = json.dumps(request, separators=(',', ':')).encode('utf-8')
             self._transport.sendto(message, (device.ip_address, device.destination_port))
             
-            _LOGGER.debug("Sent request to %s: %s", device, request)
+            # Log the actual JSON string being sent (not the Python dict)
+            _LOGGER.debug("Sent JSON to %s: %s", device, message.decode('utf-8'))
             
             # Wait for response with timeout
             try:
@@ -141,6 +150,9 @@ class MarstekUDPClient:
     def _handle_response(self, data: bytes, addr: tuple[str, int]) -> None:
         """Handle incoming UDP response."""
         try:
+            # Log raw received data for debugging
+            _LOGGER.debug("Received raw data from %s: %s", addr, data.decode('utf-8'))
+            
             response = json.loads(data.decode('utf-8'))
             request_id = response.get("id")
             
@@ -164,7 +176,7 @@ class MarstekUDPClient:
                 future.set_result(response)
                 
         except json.JSONDecodeError as e:
-            _LOGGER.error("Failed to decode JSON response from %s: %s", addr, e)
+            _LOGGER.error("Failed to decode JSON response from %s: %s. Raw data: %s", addr, e, data.decode('utf-8', errors='replace'))
         except Exception as e:
             _LOGGER.error("Error handling response from %s: %s", addr, e)
 

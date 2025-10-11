@@ -44,12 +44,7 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.devices: list[MarstekDevice] = []
         
         # Add devices from config
-        for device_config in entry.data[CONF_DEVICES]:
-            device = self.client.add_device(
-                device_config[CONF_IP_ADDRESS],
-                device_config[CONF_DESTINATION_PORT]
-            )
-            self.devices.append(device)
+        self._update_devices_from_config()
 
         super().__init__(
             hass,
@@ -57,6 +52,33 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=DOMAIN,
             update_interval=timedelta(seconds=entry.data[CONF_POLLING_INTERVAL]),
         )
+
+    def _update_devices_from_config(self) -> None:
+        """Update devices list from config entry."""
+        # Clear existing devices
+        self.devices.clear()
+        self.client._devices.clear()
+        
+        # Add devices from current config
+        for device_config in self.entry.data[CONF_DEVICES]:
+            device = self.client.add_device(
+                device_config[CONF_IP_ADDRESS],
+                device_config[CONF_DESTINATION_PORT]
+            )
+            self.devices.append(device)
+
+    async def async_config_entry_updated(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Handle config entry updates."""
+        self.entry = entry
+        
+        # Update polling interval
+        self.update_interval = timedelta(seconds=entry.data[CONF_POLLING_INTERVAL])
+        
+        # Update devices
+        self._update_devices_from_config()
+        
+        # Trigger immediate refresh to get data from new/updated devices
+        await self.async_refresh()
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from all devices."""

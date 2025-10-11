@@ -58,14 +58,14 @@ DEVICE_SENSORS = {
     SENSOR_CURRENT_CAPACITY: {
         "name": "Current Capacity",
         "icon": "mdi:battery-charging",
-        "device_class": SensorDeviceClass.ENERGY,
+        "device_class": None,
         "state_class": SensorStateClass.MEASUREMENT,
         "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_MAX_CAPACITY: {
         "name": "Max Capacity",
         "icon": "mdi:battery-plus",
-        "device_class": SensorDeviceClass.ENERGY,
+        "device_class": None,
         "state_class": None,
         "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
@@ -104,14 +104,14 @@ TOTAL_SENSORS = {
     SENSOR_TOTAL_CURRENT_CAPACITY: {
         "name": "Total Current Capacity",
         "icon": "mdi:battery-charging",
-        "device_class": SensorDeviceClass.ENERGY,
+        "device_class": None,
         "state_class": SensorStateClass.MEASUREMENT,
         "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_TOTAL_MAX_CAPACITY: {
         "name": "Total Max Capacity",
         "icon": "mdi:battery-plus",
-        "device_class": SensorDeviceClass.ENERGY,
+        "device_class": None,
         "state_class": None,
         "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
@@ -178,6 +178,10 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._attr_state_class = self._config["state_class"]
         self._attr_native_unit_of_measurement = self._config["native_unit_of_measurement"]
         
+        # Energy Dashboard compatibility
+        if sensor_type in [SENSOR_CURRENT_CAPACITY, SENSOR_MAX_CAPACITY]:
+            self._attr_entity_category = None
+        
         # Device information
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device_id)},
@@ -229,6 +233,10 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         self._attr_device_class = self._config["device_class"]
         self._attr_state_class = self._config["state_class"]
         self._attr_native_unit_of_measurement = self._config["native_unit_of_measurement"]
+        
+        # Energy Dashboard compatibility
+        if sensor_type in [SENSOR_TOTAL_CURRENT_CAPACITY, SENSOR_TOTAL_MAX_CAPACITY]:
+            self._attr_entity_category = None
         
         # Device information for integration
         self._attr_device_info = {

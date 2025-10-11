@@ -1,6 +1,6 @@
 # Marstek Battery Integration for Home Assistant
 
-A custom Home Assistant integration for monitoring Marstek battery systems via UDP communication.
+A custom Home Assistant integration for monitoring Marstek battery systems via UDP communication on the device's local API.
 
 ## Features
 
@@ -48,6 +48,17 @@ For each Marstek battery device:
 1. Enter the **IP Address** of the device
 2. Enter the **Destination Port** (default: 30000)
 3. Choose whether to add another device or finish setup
+
+### Managing Devices After Setup
+
+To add or remove devices after initial configuration:
+1. Go to **Settings → Integrations**
+2. Find **Marstek Battery System** 
+3. Click the **Configure** button (gear icon)
+4. Choose from:
+   - **Add new device**: Add another battery device
+   - **Manage devices**: Remove existing devices
+   - **Modify polling interval**: Change polling frequency
 
 ## Device Requirements
 
