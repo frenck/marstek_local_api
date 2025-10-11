@@ -136,9 +136,13 @@ async def async_setup_entry(
     entities = []
 
     # Add device-specific sensors
-    for device_id, device_data in coordinator.data.items():
+    devices_data = coordinator.data.get("devices", {}) if coordinator.data else {}
+    _LOGGER.debug("Setting up sensors for %d devices: %s", len(devices_data), list(devices_data.keys()))
+    
+    for device_id, device_data in devices_data.items():
         if isinstance(device_data, dict) and "identifier" in device_data:
-            device_name = device_data.get("device_name", f"Battery {device_id}")
+            device_name = device_data.get("device_name", device_id)
+            _LOGGER.debug("Adding sensors for device: %s (%s)", device_id, device_name)
             
             for sensor_type, sensor_config in DEVICE_SENSORS.items():
                 entities.append(
@@ -161,6 +165,7 @@ async def async_setup_entry(
             )
         )
 
+    _LOGGER.debug("Created %d sensor entities total", len(entities))
     async_add_entities(entities)
 
 
@@ -209,7 +214,8 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
     @property
     def native_value(self) -> Any:
         """Return the native value of the sensor."""
-        device_data = self.coordinator.data.get(self._device_id)
+        devices_data = self.coordinator.data.get("devices", {}) if self.coordinator.data else {}
+        device_data = devices_data.get(self._device_id)
         if not device_data or not isinstance(device_data, dict):
             return None
 
@@ -269,10 +275,11 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         if not self.coordinator.data:
             return None
 
+        devices_data = self.coordinator.data.get("devices", {})
         total_value = 0
         device_count = 0
 
-        for device_id, device_data in self.coordinator.data.items():
+        for device_id, device_data in devices_data.items():
             if not isinstance(device_data, dict):
                 continue
 
