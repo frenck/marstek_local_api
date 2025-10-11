@@ -60,14 +60,14 @@ DEVICE_SENSORS = {
         "icon": "mdi:battery-charging",
         "device_class": SensorDeviceClass.ENERGY_STORAGE,
         "state_class": SensorStateClass.MEASUREMENT,
-        "native_unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+        "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_MAX_CAPACITY: {
         "name": "Max Capacity",
         "icon": "mdi:battery-outline",
         "device_class": SensorDeviceClass.ENERGY_STORAGE,
         "state_class": SensorStateClass.MEASUREMENT,
-        "native_unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+        "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_TEMPERATURE: {
         "name": "Temperature",
@@ -92,14 +92,14 @@ TOTAL_SENSORS = {
         "icon": "mdi:battery-charging",
         "device_class": SensorDeviceClass.ENERGY_STORAGE,
         "state_class": SensorStateClass.MEASUREMENT,
-        "native_unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+        "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_TOTAL_MAX_CAPACITY: {
         "name": "Total Max Capacity",
         "icon": "mdi:battery-outline",
         "device_class": SensorDeviceClass.ENERGY_STORAGE,
         "state_class": SensorStateClass.MEASUREMENT,
-        "native_unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+        "native_unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
     },
     SENSOR_TOTAL_GRID_POWER: {
         "name": "Total Grid Power",
