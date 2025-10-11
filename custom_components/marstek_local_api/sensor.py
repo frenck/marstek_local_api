@@ -207,7 +207,7 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
             "identifiers": {(DOMAIN, device_id)},
             "name": device_name,
             "manufacturer": "Marstek",
-            "model": "Battery System",
+            "model": "Marstek Battery Device",
             "sw_version": "1.0",
         }
 
@@ -263,9 +263,9 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         # Device information for the integration itself
         self._attr_device_info = {
             "identifiers": {(DOMAIN, "system")},
-            "name": "Marstek Battery System",
+            "name": "Marstek Battery Integration",
             "manufacturer": "Marstek",
-            "model": "Marstek Battery System",
+            "model": "Marstek Battery Array",
             "sw_version": "1.0",
         }
 
