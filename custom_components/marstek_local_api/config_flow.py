@@ -174,7 +174,10 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
             new_data = dict(self._config_entry.data)
             new_data[CONF_POLLING_INTERVAL] = user_input[CONF_POLLING_INTERVAL]
             
-            return self.async_create_entry(title="", data=new_data)
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
             step_id="modify_polling",
@@ -205,6 +208,9 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
                         step_id="manage_devices",
                         data_schema=self._get_manage_devices_schema(),
                         errors={"base": "no_devices_remaining"},
+                        description_placeholders={
+                            "device_count": "0",
+                        },
                     )
                 
                 # Show updated list
@@ -213,11 +219,17 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
                 # Save changes and finish
                 new_data = dict(self._config_entry.data)
                 new_data[CONF_DEVICES] = self._devices
-                return self.async_create_entry(title="", data=new_data)
+                self.hass.config_entries.async_update_entry(
+                    self._config_entry, data=new_data
+                )
+                return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
             step_id="manage_devices",
             data_schema=self._get_manage_devices_schema(),
+            description_placeholders={
+                "device_count": str(len(self._devices)),
+            },
         )
 
     async def async_step_add_device(
@@ -233,11 +245,14 @@ class MarstekOptionsFlow(config_entries.OptionsFlow):
             }
             self._devices.append(device)
             
-            # Update the config entry
+            # Update the config entry with new device
             new_data = dict(self._config_entry.data)
             new_data[CONF_DEVICES] = self._devices
             
-            return self.async_create_entry(title="", data=new_data)
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
             step_id="add_device",
