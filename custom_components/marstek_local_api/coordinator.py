@@ -149,6 +149,8 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             
             # Build device data with unit conversions
             device_data = {
+                "device_name": device.name,
+                "ip_address": device.ip_address,
                 SENSOR_IDENTIFIER: bat_status.get("src", f"{device.ip_address}_{device.destination_port}"),
                 SENSOR_STATE_OF_CHARGE: bat_result.get("soc", 0),
                 SENSOR_CURRENT_CAPACITY: bat_result.get("bat_capacity", 0) / 1000,  # Wh to kWh

@@ -16,7 +16,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -133,14 +133,42 @@ async def async_setup_entry(
     """Set up Marstek sensors from config entry."""
     coordinator: MarstekCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     
+    # Store the async_add_entities callback for later use
+    coordinator._async_add_entities = async_add_entities
+    coordinator._existing_device_sensors = set()
+    
+    # Set up initial entities
+    await _async_setup_sensors(coordinator, async_add_entities)
+    
+    # Listen for coordinator updates to add new device sensors
+    @callback
+    def _async_add_new_sensors():
+        """Add sensors for new devices."""
+        hass.async_create_task(_async_setup_sensors(coordinator, async_add_entities))
+    
+    coordinator.async_add_listener(_async_add_new_sensors)
+
+
+async def _async_setup_sensors(
+    coordinator: MarstekCoordinator,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up sensors for all devices."""
     entities = []
 
     # Create device-specific sensors
     devices_data = coordinator.data.get("devices", {}) if coordinator.data else {}
     
     for device_id, device_data in devices_data.items():
-        if isinstance(device_data, dict) and "identifier" in device_data:
+        if isinstance(device_data, dict) and SENSOR_IDENTIFIER in device_data:
             device_name = device_data.get("device_name", device_id)
+            
+            # Check if we already have sensors for this device
+            device_key = f"{device_id}_{device_name}"
+            if device_key in coordinator._existing_device_sensors:
+                continue
+                
+            coordinator._existing_device_sensors.add(device_key)
             
             for sensor_type, sensor_config in DEVICE_SENSORS.items():
                 entities.append(
@@ -153,17 +181,20 @@ async def async_setup_entry(
                     )
                 )
 
-    # Create total aggregate sensors
-    for sensor_type, sensor_config in TOTAL_SENSORS.items():
-        entities.append(
-            MarstekTotalSensor(
-                coordinator,
-                sensor_type,
-                sensor_config,
+    # Create total aggregate sensors (only once)
+    if not hasattr(coordinator, '_total_sensors_created'):
+        coordinator._total_sensors_created = True
+        for sensor_type, sensor_config in TOTAL_SENSORS.items():
+            entities.append(
+                MarstekTotalSensor(
+                    coordinator,
+                    sensor_type,
+                    sensor_config,
+                )
             )
-        )
 
-    async_add_entities(entities)
+    if entities:
+        async_add_entities(entities)
 
 
 class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
