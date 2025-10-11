@@ -217,22 +217,18 @@ class MarstekDeviceSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
         devices_data = self.coordinator.data.get("devices", {}) if self.coordinator.data else {}
         device_data = devices_data.get(self._device_id)
         if not device_data or not isinstance(device_data, dict):
+            _LOGGER.debug("No device data found for %s (%s)", self._device_id, self._sensor_type)
             return None
 
-        # Map sensor types to data keys
-        data_mapping = {
-            SENSOR_IDENTIFIER: "identifier",
-            SENSOR_STATE_OF_CHARGE: "soc",
-            SENSOR_CURRENT_CAPACITY: "bat_capacity",
-            SENSOR_MAX_CAPACITY: "rated_capacity",
-            SENSOR_TEMPERATURE: "bat_temp",
-            SENSOR_GRID_POWER: "ongrid_power",
-        }
+        # The coordinator already stores data using SENSOR_* constants as keys
+        # so we can directly access the sensor type
+        if self._sensor_type in device_data:
+            value = device_data[self._sensor_type]
+            _LOGGER.debug("Sensor %s (%s) = %s", self._device_id, self._sensor_type, value)
+            return value
 
-        data_key = data_mapping.get(self._sensor_type)
-        if data_key and data_key in device_data:
-            return device_data[data_key]
-
+        _LOGGER.debug("Sensor type %s not found in device data for %s. Available keys: %s", 
+                     self._sensor_type, self._device_id, list(device_data.keys()))
         return None
 
 
@@ -283,26 +279,26 @@ class MarstekTotalSensor(CoordinatorEntity[MarstekCoordinator], SensorEntity):
             if not isinstance(device_data, dict):
                 continue
 
-            # Map sensor types to data aggregation logic
+            # Map sensor types to data aggregation logic using the actual SENSOR_* constants
             if self._sensor_type == SENSOR_TOTAL_CURRENT_CAPACITY:
-                if "bat_capacity" in device_data and device_data["bat_capacity"] is not None:
-                    total_value += device_data["bat_capacity"]
+                if SENSOR_CURRENT_CAPACITY in device_data and device_data[SENSOR_CURRENT_CAPACITY] is not None:
+                    total_value += device_data[SENSOR_CURRENT_CAPACITY]
                     device_count += 1
             elif self._sensor_type == SENSOR_TOTAL_MAX_CAPACITY:
-                if "rated_capacity" in device_data and device_data["rated_capacity"] is not None:
-                    total_value += device_data["rated_capacity"]
+                if SENSOR_MAX_CAPACITY in device_data and device_data[SENSOR_MAX_CAPACITY] is not None:
+                    total_value += device_data[SENSOR_MAX_CAPACITY]
                     device_count += 1
             elif self._sensor_type == SENSOR_TOTAL_GRID_POWER:
-                if "ongrid_power" in device_data and device_data["ongrid_power"] is not None:
-                    total_value += device_data["ongrid_power"]
+                if SENSOR_GRID_POWER in device_data and device_data[SENSOR_GRID_POWER] is not None:
+                    total_value += device_data[SENSOR_GRID_POWER]
                     device_count += 1
             elif self._sensor_type == SENSOR_TOTAL_GRID_OUTPUT_ENERGY:
-                if "total_grid_output_energy" in device_data and device_data["total_grid_output_energy"] is not None:
-                    total_value += device_data["total_grid_output_energy"]
+                if SENSOR_TOTAL_GRID_OUTPUT_ENERGY in device_data and device_data[SENSOR_TOTAL_GRID_OUTPUT_ENERGY] is not None:
+                    total_value += device_data[SENSOR_TOTAL_GRID_OUTPUT_ENERGY]
                     device_count += 1
             elif self._sensor_type == SENSOR_TOTAL_GRID_INPUT_ENERGY:
-                if "total_grid_input_energy" in device_data and device_data["total_grid_input_energy"] is not None:
-                    total_value += device_data["total_grid_input_energy"]
+                if SENSOR_TOTAL_GRID_INPUT_ENERGY in device_data and device_data[SENSOR_TOTAL_GRID_INPUT_ENERGY] is not None:
+                    total_value += device_data[SENSOR_TOTAL_GRID_INPUT_ENERGY]
                     device_count += 1
 
         return total_value if device_count > 0 else None

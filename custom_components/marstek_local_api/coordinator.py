@@ -142,6 +142,16 @@ class MarstekCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             bat_result = bat_status["result"]
             es_result = es_status["result"]
             
+            # Check for error codes and log warnings
+            bat_error_code = bat_result.get("error_code", "0")
+            if bat_error_code != "0" and bat_error_code != 0:
+                _LOGGER.warning("Battery error code %s from device %s: %s", bat_error_code, device, bat_result)
+            
+            # Energy system responses don't typically have error_code, but check if present
+            es_error_code = es_result.get("error_code")
+            if es_error_code is not None and es_error_code != "0" and es_error_code != 0:
+                _LOGGER.warning("Energy system error code %s from device %s: %s", es_error_code, device, es_result)
+            
             device_data = {
                 SENSOR_IDENTIFIER: bat_status.get("src", f"{device.ip_address}_{device.destination_port}"),
                 SENSOR_STATE_OF_CHARGE: bat_result.get("soc", 0),
