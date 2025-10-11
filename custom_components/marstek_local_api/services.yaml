@@ -1,0 +1,4 @@
+refresh_data:
+  name: Refresh Data
+  description: Manually refresh data from all Marstek devices
+  fields: {}

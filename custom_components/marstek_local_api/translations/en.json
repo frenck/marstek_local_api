@@ -1,0 +1,45 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Marstek Battery System",
+                "description": "Set up the Marstek battery integration to monitor your battery system.",
+                "data": {}
+            },
+            "integration_config": {
+                "title": "Integration Configuration",
+                "description": "Configure the global settings for the Marstek integration.",
+                "data": {
+                    "polling_interval": "Polling interval (seconds)",
+                    "source_port": "Source UDP port"
+                }
+            },
+            "add_device": {
+                "title": "Add Device",
+                "description": "Add a Marstek battery device. Currently configured {device_count} device(s).",
+                "data": {
+                    "ip_address": "Device IP address",
+                    "destination_port": "Device UDP port",
+                    "add_device": "Add another device"
+                }
+            }
+        },
+        "error": {
+            "no_devices": "At least one device must be configured."
+        },
+        "abort": {
+            "already_configured": "Integration is already configured."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Configure Marstek Options",
+                "description": "Update the configuration options for the Marstek integration.",
+                "data": {
+                    "polling_interval": "Polling interval (seconds)"
+                }
+            }
+        }
+    }
+}

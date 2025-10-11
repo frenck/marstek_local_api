@@ -1,0 +1,13 @@
+{
+    "domain": "marstek_local_api",
+    "name": "Marstek Battery System",
+    "codeowners": ["@DoctaShizzle"],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/DoctaShizzle/marstek_local_api",
+    "integration_type": "hub",
+    "iot_class": "local_polling",
+    "issue_tracker": "https://github.com/DoctaShizzle/marstek_local_api/issues",
+    "requirements": [],
+    "version": "0.0.1"
+}

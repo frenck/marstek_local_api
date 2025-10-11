@@ -1,0 +1,74 @@
+the integration will poll information from marstek batteries on a periodical basis.
+These batteries are able to communicate via UDP. We will send them a request in json to their ip address, from a certain source port, to a destination port (the batteries have a restriction that the src and destination port has to be the same, but it want it to be future proof, so i would suggest this be configurable), and they will respond in json.
+The information in the json will be mapped to sensor entities.
+There will also be some derived entities on integration level, which will combine information from all devices, which should be updated as the devices's entities are updated.
+
+There should only be 1 polling process for all devices, as the udp packages will all be sent from the same port (This means, also only 1 socket used).
+There will be a way to match the response for a certain device to the original request sent for that device, see below.
+
+below some test results for the UDP request and response.
+The id field for the request and response should be a random int per package, and the response will carry the same response.id. that way the response can be matched to the request.
+The response.src will normally be the same per device
+
+get battery status:
+	request: {"id":0,"method":"Bat.GetStatus","params":{"id":0}}
+	response: {
+		"id": 0,
+		"src": "VenusE-24215edb2561",
+		"result": {
+			"id": 0,
+			"soc": 11,
+			"dischrg_flag": true,
+			"bat_temp": 21.0,
+			"bat_voltage": 4911.0,
+			"bat_current": 0.0,
+			"bat_capacity": 56.0,
+			"rated_capacity": 5120.0,
+			"error_code": "0"
+		}
+	}
+
+get energy system status:
+	request: {"id":0,"method":"ES.GetStatus","params":{"id":0}}
+	response: {
+		"id": 0,
+		"src": "VenusE-24215edb2561",
+		"result": {
+			"id": 0,
+			"bat_soc": 11,
+			"bat_cap": 5120,
+			"pv_power": 0,
+			"ongrid_power": 2,
+			"offgrid_power": 0,
+			"bat_power": 37,
+			"total_pv_energy": 0,
+			"total_grid_output_energy": 68594,
+			"total_grid_input_energy": 84071,
+			"total_load_energy": 0
+		}
+	}
+	
+I want sensors for the following properties, per device:
+	get battery status: 
+		- response.src: identifier (string)
+		- response.result.soc: state_of_charge (percentage of charge)
+		- response.result.bat_capacity: current_capacity (Wh) (to be converted to Kwh)
+		- response.result.rated_capacity: max_capacity (Wh) (to be converted to Kwh)
+		- response.result.bat_temp: temperature (celsius)
+	get energy system status:
+		- response.result.ongrid_power: grid_power (W)
+		- response.result.total_grid_output_energy: total_grid_output_energy (Wh) (= accumulation, to be converted to Kwh)
+		- response.result.total_grid_input_energy: total_grid_input_energy (Wh) (= accumulation, to be converted to Kwh)
+		
+I also want the following combined properties of the properties per device, on integration level:
+	- current_capacity: sum of current_capacity for all devices (Kwh)
+	- max_capacity: sum of max_capacity for all devices (Kwh)
+	- grid_power: sum of grid_power for all devices (W)
+	
+The integration setup should have the following input parameters:
+- polling_interval (seconds): delay between the polling cycles
+- source_port: port used by the integration to communicate in UDP
+
+There is no robust way to discover the devices, so a device should be able to be added based on the following input:
+- ip_address
+- destination_port: port used by the device to communicate in UDP
