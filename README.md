@@ -14,7 +14,7 @@ A custom Home Assistant integration for monitoring Marstek battery systems via U
 - Integration-level totals across all devices
 - Configurable polling intervals
 - UDP communication with retry mechanism
-- Device auto-discovery via UDP responses
+- **Manual device configuration** (devices must be added individually with IP addresses)
 
 ## Installation
 
@@ -34,6 +34,8 @@ A custom Home Assistant integration for monitoring Marstek battery systems via U
 
 ## Configuration
 
+**Important**: This integration does **NOT** auto-discover devices. You must manually configure each Marstek battery device with its IP address.
+
 ### Integration Setup
 
 1. Go to Configuration > Integrations
@@ -42,13 +44,16 @@ A custom Home Assistant integration for monitoring Marstek battery systems via U
    - **Polling Interval**: How often to poll devices (default: 30 seconds)
    - **Source Port**: UDP port used by Home Assistant (default: 30000)
 
-### Adding Devices
+### Adding Devices (Manual Configuration Required)
+
+**Each device must be configured manually** - the integration cannot automatically find your devices.
 
 For each Marstek battery device:
-1. Enter a **Device Name** (e.g., "Main Battery", "Garage Battery")
-2. Enter the **IP Address** of the device
-3. Enter the **Destination Port** (default: 30000)
-4. Choose whether to add another device or finish setup
+1. **Find your device's IP address** (check your router or device documentation)
+2. Enter a **Device Name** (e.g., "Main Battery", "Garage Battery")
+3. Enter the **IP Address** of the device
+4. Enter the **Destination Port** (default: 30000, check device configuration)
+5. Choose whether to add another device or finish setup
 
 ### Managing Devices After Setup
 
@@ -57,9 +62,19 @@ To add or remove devices after initial configuration:
 2. Find **Marstek Battery System** 
 3. Click the **Configure** button (gear icon)
 4. Choose from:
-   - **Add new device**: Add another battery device
+   - **Add new device**: Add another battery device (requires IP address)
    - **Manage devices**: Remove existing devices
    - **Modify polling interval**: Change polling frequency
+
+### Why No Auto-Discovery?
+
+This integration uses **manual configuration** rather than auto-discovery because:
+- Marstek devices use UDP communication which doesn't support reliable network scanning
+- Manual configuration ensures stable connections with known IP addresses  
+- You have full control over which devices are monitored
+- Reduces network traffic from discovery broadcasts
+
+**Tip**: Set static IP addresses for your Marstek devices in your router to prevent connection issues if device IPs change.
 
 ## Device Requirements
 
@@ -67,6 +82,8 @@ To add or remove devices after initial configuration:
 - Devices must respond to `Bat.GetStatus` and `ES.GetStatus` JSON-RPC requests
 - Source and destination ports should match (Marstek requirement)
 - Devices should be accessible on your local network
+- **You must know each device's IP address** - the integration does not scan for devices
+- Consider setting static IP addresses for your devices to prevent configuration issues
 
 ## Sensors
 
@@ -126,9 +143,30 @@ The integration uses JSON-RPC over UDP:
 
 ### Common Issues
 
-1. **No data from devices**: Check IP addresses and port configuration
-2. **Timeout errors**: Verify network connectivity and firewall settings
-3. **Port conflicts**: Ensure source port is not used by other applications
+1. **No data from devices**: 
+   - Verify device IP addresses are correct and reachable
+   - Check that devices are on the same network as Home Assistant
+   - Confirm port configuration (default: 30000)
+
+2. **Device suddenly stops working**:
+   - Check if device IP address has changed (DHCP assignment)
+   - Consider setting static IP addresses for your devices
+
+3. **Timeout errors**: 
+   - Verify network connectivity between Home Assistant and devices
+   - Check firewall settings on both Home Assistant and device networks
+   - Ensure devices are powered on and responsive
+
+4. **Port conflicts**: 
+   - Ensure source port (default: 30000) is not used by other applications
+   - Check if multiple Home Assistant instances are using the same port
+
+### Finding Device IP Addresses
+
+- Check your router's admin interface for connected devices
+- Look for devices with names like "Marstek" or "VenusE"
+- Use network scanning tools like `nmap` or mobile apps like "Fing"
+- Check device documentation for IP display methods
 
 ### Debugging
 
