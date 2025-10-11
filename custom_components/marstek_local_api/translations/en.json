@@ -2,8 +2,8 @@
     "config": {
         "step": {
             "user": {
-                "title": "Marstek Battery System",
-                "description": "Set up the Marstek battery integration to monitor your battery system.",
+                "title": "Marstek Battery System - Local API",
+                "description": "Set up the Marstek battery integration to monitor your battery system via the Local API.",
                 "data": {}
             },
             "integration_config": {
